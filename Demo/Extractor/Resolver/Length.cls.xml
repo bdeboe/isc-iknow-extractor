@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.Resolver.Length">
+<Description>
+Sets score of values outside of boundaries to 0</Description>
+<Super>Interval</Super>
+<TimeCreated>63719,66353.890647</TimeCreated>
+
+<Parameter name="MAXIMUM">
+<Default>250</Default>
+</Parameter>
+
+<Parameter name="MINIMUM">
+<Default>110</Default>
+</Parameter>
+
+<Parameter name="SOFTMAXIMUM">
+<Default>210</Default>
+</Parameter>
+
+<Parameter name="SOFTMINIMUM">
+<Default>130</Default>
+</Parameter>
+
+<Method name="GetItems">
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[&pItems]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set pItems("LENGTH-CM")=""
+	quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>

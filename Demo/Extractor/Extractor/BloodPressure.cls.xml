@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.Extractor.BloodPressure">
+<Super>Regexp</Super>
+<TimeCreated>63718,62597.299966</TimeCreated>
+
+<Parameter name="ITEMNAME">
+<Default>BLOOD-PRESSURE</Default>
+</Parameter>
+
+<Parameter name="ITEMLABEL">
+<Default>Blood pressure</Default>
+</Parameter>
+
+<Parameter name="ITEMDESCRIPTION">
+<Default>Blood pressure in mmHg (systolic vs diastolic)</Default>
+</Parameter>
+
+<Method name="GetRegularExpressions">
+<Description>
+Return the regexps this extractor should take care of:
+		pRegexps(ID) = $lb(regexp, replace, element, eval)</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pRegexps</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	kill pRegexps
+	set pRegexps($i(pRegexps)) = $lb("(.*[^0-9\.])?(blood pressure) ?([0-9]+) ?/ ?([0-9]+).*", "$3 / $4", 1, 0)
+	quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>

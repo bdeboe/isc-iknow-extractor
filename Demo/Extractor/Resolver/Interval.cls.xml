@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.Resolver.Interval">
+<Description><![CDATA[
+Modifies score of values outside of boundaries to 0
+	<ul>
+<li>value &lt; <parameter>MINIMUM</parameter> ==> score = 0</li>
+<li><parameter>MINIMUM</parameter> &lt;= value &lt; <parameter>SOFTMINIMUM</parameter> ==> score = score/2</li>
+<li><parameter>SOFTMINIMUM</parameter> &lt;= value &lt;= <parameter>SOFTMAXIMUM</parameter> ==> score = score</li>
+<li><parameter>SOFTMAXIMUM</parameter> &lt; value &lt;= <parameter>MAXIMUM</parameter> ==> score = score/2</li>
+<li><parameter>MAXIMUM</parameter> &lt; value ==> score = 0</li>
+</ul>]]></Description>
+<Super>Abstract</Super>
+<TimeCreated>63719,66276.295189</TimeCreated>
+
+<Parameter name="MINIMUM">
+</Parameter>
+
+<Parameter name="SOFTMINIMUM">
+</Parameter>
+
+<Parameter name="SOFTMAXIMUM">
+</Parameter>
+
+<Parameter name="MAXIMUM">
+</Parameter>
+
+<Method name="GetItems">
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[&pItems]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[	quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="Resolve">
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[&pResults]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set tSC = $$$OK
+	try {
+		do ..GetItems(.tItems)
+		//m ^bdb($i(^bdb), "before") = pResults
+		set tItem = ""
+		for {
+			set tItem = $order(tItems(tItem))
+			quit:tItem=""
+			
+			set i = ""
+			for {
+				set i = $order(pResults(tItem, i), 1, tData)
+				quit:i=""
+				
+				set tValue = $lg(tData,1)
+				
+				set tNewScore = ""
+				if (tValue < ..#MINIMUM) { set tNewScore = 0 }
+				if (..#SOFTMINIMUM'="") && (..#MINIMUM <= tValue) && (tValue < ..#SOFTMINIMUM) { set tNewScore = $lg(tData,2)/2 }
+				if (..#SOFTMAXIMUM'="") && (..#SOFTMAXIMUM < tValue) && (tValue <= ..#MAXIMUM) { set tNewScore = $lg(tData,2)/2 }
+				if (..#MAXIMUM < tValue) { set tNewScore = 0 }
+				continue:tNewScore=""
+				
+				set $li(tData,2) = tNewScore
+				set $li(tData,3) = $li(tData,3)_","_$classname()
+				set pResults(tItem, i) = tData
+			}
+		}
+		
+	} catch (ex) {
+		set tSC = ex.AsStatus()
+	}
+	quit tSC
+]]></Implementation>
+</Method>
+</Class>
+</Export>

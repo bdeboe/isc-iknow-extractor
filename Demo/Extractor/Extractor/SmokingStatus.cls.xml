@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.Extractor.SmokingStatus">
+<Super>Dictionary</Super>
+<TimeCreated>63719,75053.013081</TimeCreated>
+
+<Parameter name="ITEMNAME">
+<Default>SMOKING-STATUS</Default>
+</Parameter>
+
+<Parameter name="ITEMLABEL">
+<Default>Smoking status</Default>
+</Parameter>
+
+<Parameter name="ITEMDESCRIPTION">
+<Default>Smoking cessation status</Default>
+</Parameter>
+
+<Method name="GetTerms">
+<Description>
+Return the (literal) terms this extractor should take care of:
+		pTerms(ID) = $lb(term, trackEntities)</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pTerms</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set pTerms($i(pTerms)) = $lb("current smoker", $lb("current smoker"), 1)
+	set pTerms($i(pTerms)) = $lb("light cigarette smoker", $lb("light cigarette smoker"), 1)
+	set pTerms($i(pTerms)) = $lb("smoking", $lb("smoking"), 1)
+	quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>

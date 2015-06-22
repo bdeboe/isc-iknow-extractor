@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.Extractor.Age">
+<Super>Regexp</Super>
+<TimeCreated>63712,41561.977189</TimeCreated>
+
+<Parameter name="ITEMNAME">
+<Default>AGE</Default>
+</Parameter>
+
+<Parameter name="ITEMLABEL">
+<Default>Age</Default>
+</Parameter>
+
+<Parameter name="ITEMDESCRIPTION">
+<Default>Age in years</Default>
+</Parameter>
+
+<Method name="GetRegularExpressions">
+<Description>
+Return the regexps this extractor should take care of:
+		pRegexps(ID) = $lb(regexp, replace, element, eval)</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pRegexps</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set pRegexps(1) = $lb("(.*[^0-9])?([0-9]+)[- ]year[- ]old.*", "$2", 1, 0)
+	quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>

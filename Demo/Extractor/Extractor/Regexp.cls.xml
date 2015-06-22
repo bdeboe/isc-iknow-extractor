@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.Extractor.Regexp">
+<Abstract>1</Abstract>
+<Super>Abstract</Super>
+<TimeCreated>63712,42799.093717</TimeCreated>
+
+<Parameter name="TRACKENTITIES">
+<Default>0</Default>
+</Parameter>
+
+<Property name="DictionaryId">
+<Type>%Integer</Type>
+</Property>
+
+<Method name="GetRegularExpressions">
+<Description>
+Return the regexps this extractor should take care of:
+		pRegexps(ID) = $lb(regexp, replace, element, eval)</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pRegexps</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[	quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="Register">
+<Description>
+Registers this extractor with the domain, preparing any required domain artifacts such as
+dictionary items and formats.</Description>
+<Final>1</Final>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set tSC = $$$OK
+	try {
+		// check if this dictionary already exists
+		set ..DictionaryId = ##class(%iKnow.Matching.DictionaryAPI).GetDictionaryId(..DomainId, $classname())
+		quit:..DictionaryId>0
+		
+		set ..DictionaryId = ##class(%iKnow.Matching.DictionaryAPI).CreateDictionary(..DomainId, $classname(), "Extractor dictionary for "_$classname(),,, .tSC)
+		quit:$$$ISERR(tSC)
+		
+		do ..GetRegularExpressions(.tRegexp)
+		set id = ""
+		for {
+			set id = $order(tRegexp(id), 1, tData)
+			quit:id=""
+			
+			set tItemURI = $classname()_":"_id
+			
+			set tDictItemId = ##class(%iKnow.Matching.DictionaryAPI).CreateDictionaryItem(..DomainId, ..DictionaryId, $classname()_" #"_id, $classname()_":"_id,, .tSC)
+			quit:$$$ISERR(tSC)
+			set tDictTermId = ##class(%iKnow.Matching.DictionaryAPI).CreateRegularExpression(..DomainId, tDictItemId, $lg(tData,1), $lg(tData,2), .tSC)
+			quit:$$$ISERR(tSC)
+		}
+		
+	} catch (ex) {
+		set tSC = ex.AsStatus()
+	}
+	quit tSC
+]]></Implementation>
+</Method>
+
+<Method name="Unregister">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pDomainId:%Integer</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set tDictId = ##class(%iKnow.Matching.DictionaryAPI).GetDictionaryId(pDomainId, $classname())
+	quit:tDictId<=0 $$$OK
+	quit ##class(%iKnow.Matching.DictionaryAPI).DropDictionary(pDomainId, tDictId)
+]]></Implementation>
+</Method>
+
+<Method name="Extract">
+<Description><![CDATA[
+Extracts item values from <var>pSourceId</var> and appends them to <var>pResults</var>
+		pResults(ITEM, n) = $lb(value, score, classname, highlightspec, entities, negation)]]></Description>
+<FormalSpec><![CDATA[pSourceId:%Integer,&pResults]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set tSC = $$$OK
+	try {
+		do ..GetRegularExpressions(.tRegexps)
+		
+		set tSC = ##class(%iKnow.Matching.MatchingAPI).GetMatchesBySourceId(.tMatches, ..DomainId, pSourceId, $lb(..DictionaryId), 0, 0)
+		quit:$$$ISERR(tSC)
+		
+		set i = ""
+		for {
+			set i = $order(tMatches(i), 1, tData)
+			quit:i=""
+			
+			set tMatchId = $lg(tData,1), tItemURI = $lg(tData,4), tItemId = $lg(tData,3)
+			set tREInfo = $g(tRegexps($piece(tItemURI,":",2)))
+			continue:tREInfo=""
+			set tREElementPos = $lg(tREInfo,3,1), tREExecute = $lg(tREInfo,4,0)
+			
+			// retrieve format results
+			set tSC = ##class(%iKnow.Matching.MatchingAPI).GetMatchElements(.tElements, ..DomainId, tMatchId, $s(pSourceId<0:pSourceId, 1:0))
+			quit:$$$ISERR(tSC)
+			
+			// walk through elements
+			set j = "", tEntities = "", tValue=""
+			for {
+				set j = $order(tElements(j), 1, tElementData)
+				quit:j=""
+				
+				//set tEntities = tEntities_$lb(##class(%iKnow.Queries.EntityAPI).GetValueInternal(..DomainId, $lg(tElementData,3), $s(pSourceId<0:pSourceId, 1:0)))
+				set:..#TRACKENTITIES tEntities = tEntities_$lb($lg(tElementData,3))
+				
+				continue:j'=tREElementPos
+				
+				// if this is the element of interest, calculate values
+				set tValue = $lg(tElementData,11), tScore = $lg(tElementData,6)
+				
+				// check if this needs evaluation
+				if tREExecute {
+					xecute ("(v) set v = "_tValue, .tEvaluatedValue)
+					set tValue = tEvaluatedValue
+				}
+			}
+			
+			do ..AddResult(.pResults, tValue, tScore, "MATCH:"_..DictionaryId_":"_tMatchId, tEntities)
+		}
+		quit:$$$ISERR(tSC)
+		
+	} catch (ex) {
+		set tSC = ex.AsStatus()
+	}
+	quit tSC
+]]></Implementation>
+</Method>
+</Class>
+</Export>

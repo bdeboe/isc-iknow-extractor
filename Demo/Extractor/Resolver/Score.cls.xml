@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.Resolver.Score">
+<Super>Abstract</Super>
+<TimeCreated>63718,60430.150428</TimeCreated>
+
+<Method name="Resolve">
+<Description>
+Accepts (merged) results as retrieved by AbstractExtractor:Extract() and identifies the
+value with the highest total score, populating the base pResults(LABEL) nodes with the 
+selected value and aggregate score.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[&pResults]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set tSC = $$$OK
+	try {
+		set tItem = ""
+		for {
+			set tItem = $order(pResults(tItem))
+			quit:tItem=""
+			
+			// skip if there are already any other results
+			continue:$g(pResults(tItem))'=""
+			
+			kill tScores
+			set i = ""
+			for {
+				set i = $order(pResults(tItem,i),1,tData)
+				quit:i=""
+				
+				set tScore = $lg(tData,2)
+				continue:'tScore
+				
+				set tValue = $lg(tData,1)
+				set:tValue="" tValue = $c(0)
+				
+				set tScores(tValue) = $g(tScores(tValue))+tScore
+				set tScores(tValue,"n") = $g(tScores(tValue,"n"))+1
+				set:$ld(tData,3,tClass)&&(tClass'="") tScores(tValue,"c",tClass)=""
+			}
+			
+			// find best score
+			set tMaxScore="", tMaxScoreValue=""
+			set tValue=""
+			for {
+				set tValue = $order(tScores(tValue), 1, tScore)
+				quit:tValue=""
+				
+				continue:tMaxScore>=tScore
+				set tMaxScore = tScore, tMaxScoreValue = tValue
+			}
+			
+			// find classes
+			set tClasses = "", tClass=""
+			for {
+				set tClass = $order(tScores(tMaxScoreValue, "c", tClass))
+				quit:tClass=""
+				set tClasses = tClasses_$s(tClasses="":"",1:",")_tClass
+			}
+			
+			set pResults(tItem) = $lb(tMaxScoreValue, tMaxScore, tClass)
+		}
+	} catch (ex) {
+		set tSC = ex.AsStatus()
+	}
+	quit tSC
+]]></Implementation>
+</Method>
+</Class>
+</Export>

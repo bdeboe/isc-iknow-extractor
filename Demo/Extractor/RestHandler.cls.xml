@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.RestHandler">
+<IncludeCode>%IKPublic</IncludeCode>
+<Super>%CSP.REST</Super>
+<TimeCreated>63712,43725.205907</TimeCreated>
+
+<Parameter name="JSONFORMATPARAMS">
+<Type>STRING</Type>
+<Default>aelotwu</Default>
+</Parameter>
+
+<XData name="UrlMap">
+<XMLNamespace>http://www.intersystems.com/urlmap</XMLNamespace>
+<Data><![CDATA[
+<Routes>
+<Route Url="/extractors" Method="GET" Call="GetExtractorClasses" />
+<Route Url="/extract/:domain" Method="POST" Call="GetExtractions" />
+<Route Url="/sources/:domain" Method="GET" Call="GetSources" />
+<Route Url="/sources/:domain/:source" Method="GET" Call="GetSourceText" />
+</Routes>
+]]></Data>
+</XData>
+
+<Method name="GetExtractorClasses">
+<Description><![CDATA[
+Returns an array containing the available extractor classes
+<blockquote><pre>{
+		Extractors: [
+			{
+					ClassName: "classname",
+					ItemName: "item",
+					ItemLabel: "label",
+					ItemDescription: "description"
+			}, ...
+]}</pre></blockquote>]]></Description>
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set tSC = $$$OK
+	try {
+		
+		set:$data(%response) %response.ContentType="application/json"
+		set tJSON = ##class(%ZEN.proxyObject).%New()
+		set tJSON.Extractors = ##class(%ListOfObjects).%New()
+		
+		set tResultSet = ##class(%ResultSet).%New("%Dictionary.ClassDefinitionQuery:SubclassOf")
+		set tSC = tResultSet.%Execute("Demo.Extractor.Extractor.Abstract")
+		quit:$$$ISERR(tSC)
+		while (tResultSet.%Next()) {
+			set tExtractorClass = tResultSet.Name
+			continue:##class(%Dictionary.ClassDefinition).%OpenId(tExtractorClass).Abstract
+			
+			set tExtrObj = ##class(%ZEN.proxyObject).%New()
+			do tJSON.Extractors.Insert(tExtrObj)
+			set tExtrObj.ClassName = tExtractorClass
+			set tExtrObj.ItemName = $parameter(tExtractorClass, "ITEMNAME")
+			set tExtrObj.ItemLabel = $parameter(tExtractorClass, "ITEMLABEL")
+			set tExtrObj.ItemDescription = $parameter(tExtractorClass, "ITEMDESCRIPTION")
+		}
+		
+		// write output
+		do tJSON.%ToJSON(,..#JSONFORMATPARAMS)
+		
+	} catch (ex) {
+		set tSC = ex.AsStatus()
+	}
+	quit ..ErrorHandler(tSC)
+]]></Implementation>
+</Method>
+
+<Method name="GetExtractions">
+<Description><![CDATA[
+Accepts the following JSON (as HTTP POST content):
+<blockquote><pre>{
+			SourceId: srcId,
+			Text: "text", 		// if no SourceId is present
+		Extractors: [ 'classname1', 'classname2' ]
+}</pre></blockquote>]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pDomainId:%Integer</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set tSC = $$$OK
+	try {
+		// parse request
+		set tJSONString = ""
+		while '%request.Content.AtEnd {
+			set tJSONString = tJSONString_$zcvt(%request.Content.ReadLine(),"I","UTF8")
+		}
+		set tSC = ##class(%ZEN.Auxiliary.jsonProvider).%ConvertJSONToObject(tJSONString,,.tRequest)
+		quit:$$$ISERR(tSC)
+		
+		// first derive source ID
+		set tSourceId = tRequest.SourceId
+		if 'tSourceId {
+			set tDomainName = $system.iKnow.GetDomainName(pDomainId)
+			set tSC = $system.iKnow.IndexString(tDomainName, "rest", tRequest.Text,, 1, .tSourceId)
+			quit:$$$ISERR(tSC)
+		}
+		
+		
+		// line up and fire extractor objects
+		for i = 1:1:tRequest.Extractors.Count() {
+			set tClassname = tRequest.Extractors.GetAt(i)
+			
+			// assume there won't be any name conflicts
+			set tItems($parameter(tClassname,"ITEMNAME")) = $lb($parameter(tClassname,"ITEMLABEL"), $parameter(tClassname,"ITEMDESCRIPTION"))
+			
+			set tExtractor = $classmethod(tClassname, "%New", pDomainId)
+			if '$isobject(tExtractor) {
+				set tSC = $g(%objlasterror)
+				set:$$$ISOK(tSC) tSC = $$$ERROR($$$GeneralError, "Error instantiating extractor class '"_tClassname_"'")
+				quit
+			}
+			
+			set tSC = $method(tExtractor, "Extract", tSourceId, .tResults)
+			quit:$$$ISERR(tSC)
+		}
+		quit:$$$ISERR(tSC)
+		
+		// consolidate using list of resolvers
+		for i = 1:1:tRequest.Resolvers.Count() {
+			set tClassname = tRequest.Resolvers.GetAt(i)
+			set tExtractor = $classmethod(tClassname, "Resolve", .tResults)
+		}
+		quit:$$$ISERR(tSC)
+		
+		
+		// convert to JSON
+		set:$data(%response) %response.ContentType="application/json"
+		set tJSON = ##class(%ZEN.proxyObject).%New()
+		set tJSON.DomainId = pDomainId
+		set tJSON.SourceId = tSourceId
+		set tJSON.Items = ##class(%ArrayOfObjects).%New()
+		set tItem = ""
+		for {
+			set tItem = $order(tResults(tItem))
+			quit:tItem=""
+			
+			set tItemObj = ##class(%ZEN.proxyObject).%New()
+			set tItemObj.ItemName = tItem
+			set tItemObj.Label = $lg(tItems(tItem),1)
+			set tItemObj.Description = $lg(tItems(tItem),2)
+			do tJSON.Items.SetAt(tItemObj, tItem)
+			
+			set tResolvedValue = $g(tResults(tItem))
+			set:tResolvedValue'="" tItemObj.ResolvedValue = $$ValueToJSON(tResolvedValue)
+			
+			kill tEntities
+			set tItemObj.Values = ##class(%ListOfObjects).%New()
+			set i = ""
+			for {
+				set i = $order(tResults(tItem, i), 1, tValue)
+				quit:i=""
+				set tValueObj = $$ValueToJSON(tValue)
+				do tItemObj.Values.Insert(tValueObj)
+				
+				// convert highlight spec
+				set tHLSpec = $lg(tValue,4)
+				if (tHLSpec'="") {
+					set tType = $piece(tHLSpec,":",1)
+					if tType="MATCH" {
+						set tHighlights("MATCH", $piece(tHLSpec,":",2)) = "<b class=""ci"_tItem_" ci"_tItem_"n$$$ID"">"
+						set tValueObj.HighlightID = $piece(tHLSpec,":",3)
+					}
+				}
+				
+				// store entity ids if the score was nonzero
+				continue:'$lg(tValue,2)
+				set tEntList = $lg(tValue,5), ptr=0
+				while $listnext(tEntList, ptr, tEntity) {
+					set tEntities(tEntity)=""
+				}
+			}
+			
+			/// assemble entities
+			kill tTotalProximity, tProxSorted
+			set tItemObj.Entities = ##class(%ListOfDataTypes).%New()
+			set tEntity = ""
+			for {
+				set tEntity = $order(tEntities(tEntity))
+				quit:tEntity=""
+				set tEntityValue = ##class(%iKnow.Queries.EntityAPI).GetValueInternal(pDomainId, tEntity, $s(tSourceId>0:0, 1:tSourceId))
+				do tItemObj.Entities.Insert(tEntityValue)
+				
+				// note: proximity information is only available for non-virtual sources!
+				kill tProx
+				if (tSourceId>0) {
+					set tSC = ##class(%iKnow.Semantics.ProximityAPI).GetProfileBySourceId(.tProx, pDomainId, tEntity, tSourceId, 0, 0)
+					quit:$$$ISERR(tSC)
+					set i=""
+					for {
+						set i = $order(tProx(i), 1, tProxData)
+						quit:i=""
+						set tOtherEntUniId = $lg(tProxData,1)
+						set tTotalProximity(tOtherEntUniId) = $g(tTotalProximity(tOtherEntUniId))+$lg(tProxData,3)
+						set tTotalProximity(tOtherEntUniId,$lg(tProxData,2))=""
+					}
+					// stick to simple related entities if nothing found
+					if '$d(tProx) {
+						set tSC = ##class(%iKnow.Queries.EntityAPI).GetRelatedById(.tRelated, pDomainId, tEntity, 0, 0, tSourceId, $$$FILTERFREQANDSORT)
+						quit:$$$ISERR(tSC)
+						set i=""
+						for {
+							set i = $order(tRelated(i), 1, tRelData)
+							quit:i=""
+							set tOtherEntUniId = $lg(tRelData, 1)
+							set tTotalProximity(tOtherEntUniId) = $g(tTotalProximity(tOtherEntUniId))+$lg(tRelData,3)
+							set tTotalProximity(tOtherEntUniId,$lg(tRelData,2))=""
+						}
+					}
+				}
+			}
+			
+			// assemble proximity information
+			set tItemObj.Proximity = ##class(%ListOfObjects).%New()
+			set tOtherEntUniId=""
+			for {
+				set tOtherEntUniId = $order(tTotalProximity(tOtherEntUniId),1,tProxScore)
+				quit:tOtherEntUniId=""
+				set tProxSorted(-tProxScore, tOtherEntUniId) = $o(tTotalProximity(tOtherEntUniId,""))
+			}
+			set tProxScore=""
+			for {
+				set tProxScore = $order(tProxSorted(tProxScore))
+				quit:tProxScore=""
+				set tOtherEntUniId=""
+				for {
+					set tOtherEntUniId = $order(tProxSorted(tProxScore, tOtherEntUniId), 1, tOtherEntValue)
+					quit:tOtherEntUniId=""
+					
+					set tProxObj = ##class(%ZEN.proxyObject).%New()
+					set tProxObj.Entity = tOtherEntValue
+					set tProxObj.Score = -tProxScore
+					do tItemObj.Proximity.Insert(tProxObj)
+				}
+			}
+		}
+		
+		// add highlighted text
+		set tHighlights("ROLE",$$$ENTTYPECONCEPT) = "<font class=""concept"">"
+		set tHighlights("ATTRIBUTE",$$$IKATTNEGATION) = "<font class=""negated"">"
+		set tText = ""
+		set tSC = ##class(%iKnow.Queries.SentenceAPI).GetBySource(.tSentences, pDomainId, tSourceId, 0, 0)
+		quit:$$$ISERR(tSC)
+		set i = ""
+		for {
+			set i = $order(tSentences(i), 1, tSentData)
+			quit:i=""
+			
+			set tText = tText_$s(tText="":"", 1:" ")_ ##class(%iKnow.Queries.SentenceAPI).GetHighlighted(pDomainId, $lg(tSentData,1), .tHighlights, $s(tSourceId<0:tSourceId, 1:0),, .tSC)
+			quit:$$$ISERR(tSC)
+		}
+		quit:$$$ISERR(tSC)
+		set tJSON.HighlightedText = tText
+		
+		
+		// append concepts
+		set tJSON.Concepts = ##class(%ListOfObjects).%New()
+		set tSC = ##class(%iKnow.Semantics.DominanceAPI).GetBySource(.tConcepts, pDomainId, tSourceId, 0, 0)
+		quit:$$$ISERR(tSC)
+		set i = ""
+		for {
+			set i = $order(tConcepts(i), 1, tData)
+			quit:i=""
+			set tConcept = ##class(%ZEN.proxyObject).%New()
+			set tConcept.Concept = $lg($lg(tData,2))
+			set tConcept.Dominance = $lg(tData,4)
+			do tJSON.Concepts.Insert(tConcept)
+		}
+		
+		// write output
+		do tJSON.%ToJSON(,..#JSONFORMATPARAMS)
+	} catch (ex) {
+		set tSC = ex.AsStatus()
+	}
+	
+	if $isobject(tRequest) && 'tRequest.SourceId {
+		do $system.iKnow.DeleteVirtualSource(tDomainName, tSourceId)
+	}
+	
+	quit ..ErrorHandler(tSC)
+	
+ValueToJSON(tValue)
+	set tValueObj = ##class(%ZEN.proxyObject).%New()
+	set tValueObj.Value = $lg(tValue,1)
+	set tValueObj.Score = $lg(tValue,2)
+	set tValueObj.SourceClass = $lg(tValue,3)
+	set tValueObj.Negated = $lg(tValue,6)
+	quit tValueObj
+]]></Implementation>
+</Method>
+
+<Method name="GetSources">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pDomainId:%Integer</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set tSC = $$$OK
+	try {
+		
+		set:$data(%response) %response.ContentType="application/json"
+		set tJSON = ##class(%ZEN.proxyObject).%New()
+		set tJSON.Sources = ##class(%ListOfObjects).%New()
+		
+		set tSC = ##class(%iKnow.Queries.SourceAPI).GetByDomain(.tSources, pDomainId, 0, 0)
+		quit:$$$ISERR(tSC)
+		set i = ""
+		for {
+			set i = $order(tSources(i),1,tData)
+			quit:i=""
+			
+			set tSrcObj = ##class(%ZEN.proxyObject).%New()
+			do tJSON.Sources.Insert(tSrcObj)
+			set tSrcObj.SourceId = $lg(tData,1)
+			set tSrcObj.ExternalId = $lg(tData,2)
+			set tSrcObj.Label = tSrcObj.ExternalId
+			
+			set tSC = ##class(%iKnow.Queries.MetadataAPI).GetValuesById(.tMetadata, pDomainId, tSrcObj.SourceId)
+			quit:$$$ISERR(tSC)
+			set j=""
+			for {
+				set j = $order(tMetadata(j),1,tMeta)
+				quit:j=""
+				set $property(tSrcObj,$lg(tMeta,2)) = $lg(tMeta,3)
+				set:$lf($lb("TITLE","LABEL"),$$$UPPER($lg(tMeta,2))) tSrcObj.Label = $lg(tMeta,3)
+			}
+		}
+		
+		// write output
+		do tJSON.%ToJSON(,..#JSONFORMATPARAMS)
+		
+	} catch (ex) {
+		set tSC = ex.AsStatus()
+	}
+	quit ..ErrorHandler(tSC)
+]]></Implementation>
+</Method>
+
+<Method name="GetSourceText">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pDomainId:%Integer,pSourceId:%Integer</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set tSC = $$$OK
+	try {
+		
+		set:$data(%response) %response.ContentType="application/json"
+		set tJSON = ##class(%ZEN.proxyObject).%New()
+		
+		set tSourceObj = ##class(%iKnow.Objects.Source).PKINDEXOpen(pDomainId, pSourceId)
+		quit:tSourceObj=""
+		
+		set tJSON.SourceId = pSourceId
+		set tJSON.Text = tSourceObj.FullText
+		
+		// write output
+		do tJSON.%ToJSON(,..#JSONFORMATPARAMS)
+		
+	} catch (ex) {
+		set tSC = ex.AsStatus()
+	}
+	quit ..ErrorHandler(tSC)
+]]></Implementation>
+</Method>
+
+<Method name="ErrorHandler">
+<Description><![CDATA[
+Simple error handler, converting a <class>%Status</class> object to a JSON representation.]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pSC:%Status</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	if $$$ISERR(pSC) {
+		set tErrorObject = ##class(%ZEN.proxyObject).%New()
+		set tErrorObject.ErrorNum=$piece($SYSTEM.Status.GetErrorCodes(pSC),",")
+		set tErrorObject.ErrorMessage=$SYSTEM.Status.GetOneStatusText(pSC)
+		set %response.ContentType="application/json"
+		
+		do tErrorObject.%ToJSON(,..#JSONFORMATPARAMS)
+	}
+	quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>

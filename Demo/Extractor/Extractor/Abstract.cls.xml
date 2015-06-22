@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.Extractor.Abstract">
+<Abstract>1</Abstract>
+<IncludeCode>%IKPublic</IncludeCode>
+<Super>%RegisteredObject</Super>
+<TimeCreated>63712,39204.767163</TimeCreated>
+
+<Parameter name="ITEMNAME">
+</Parameter>
+
+<Parameter name="ITEMLABEL">
+</Parameter>
+
+<Parameter name="ITEMDESCRIPTION">
+</Parameter>
+
+<Property name="DomainId">
+<Type>%Integer</Type>
+</Property>
+
+<Method name="%OnNew">
+<Internal>1</Internal>
+<FormalSpec>pDomainId:%Integer</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<ServerOnly>1</ServerOnly>
+<Implementation><![CDATA[
+	set ..DomainId = pDomainId
+	quit ..Register()
+]]></Implementation>
+</Method>
+
+<Method name="Register">
+<Description>
+Registers this extractor with the domain, preparing any required domain artifacts such as
+dictionary items and formats.</Description>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[	quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="Unregister">
+<Description><![CDATA[
+Removes all artifacts created in earlier calls to <method>Register</method>.]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pDomainId:%Integer</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[	quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="Extract">
+<Description><![CDATA[
+Extracts item values from <var>pSourceId</var> and appends them to <var>pResults</var>
+		pResults(ITEM, n) = $lb(value, score, classname, highlightspec, entities, negation)]]></Description>
+<Abstract>1</Abstract>
+<FormalSpec><![CDATA[pSourceId:%Integer,&pResults]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set tSC = $$$OK
+	try {
+		
+	} catch (ex) {
+		set tSC = ex.AsStatus()
+	}
+	quit tSC
+]]></Implementation>
+</Method>
+
+<Method name="AddResult">
+<FormalSpec><![CDATA[&pResults,pValue:%String,pScore:%Numeric=1,pHighlightSpec:%String,pEntities:%List="",pNegated:%Boolean=0]]></FormalSpec>
+<Private>1</Private>
+<Implementation><![CDATA[	set pResults(..#ITEMNAME, $order(pResults(..#ITEMNAME,""),-1)+1) = $lb(pValue, pScore, $classname(), pHighlightSpec, pEntities, pNegated)
+]]></Implementation>
+</Method>
+</Class>
+</Export>

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<CSP name="Extractor.js" application="/csp/extractor/" default="1"><![CDATA[
+
+var extractorApp = angular.module('extractorApp', ['ngResource', 'ngSanitize']);
+
+ extractorApp.controller('ExtractorController', [ '$scope', '$resource', 'rsExtract', function($scope, $resource, rsExtract) {
+	
+	$scope.currentTab = 0;
+	 
+	// initialize ikDomain
+	if (location.search === '') { alert('No domain specified in URL!'); }
+	$scope.ikDomain = location.search.substr(1).split('#')[0];
+	 
+	// initialize list of available extractors and sources
+   	var x = $resource( hostURL() + "extractors", {}, 
+				   		{ query: { method: "GET", isArray: false } }
+					).query(function() {
+					   	$scope.extractors = x.Extractors;
+					   	delete x;
+				   	});
+   	var x = $resource( hostURL() + "sources/:domain", {}, 
+				   		{ query: { method: "GET", isArray: false, params: { domain: $scope.ikDomain } } }
+					).query(function() {
+					   	$scope.sources = x.Sources;
+					   	$scope.sources.unshift({ SourceId: -1, Label: '-- manual input --' });
+					   	delete x;
+				   	});
+	
+	
+	$scope.currentSource = 0;
+	$scope.showInput = true;
+   	
+   	// utility function to retrieve all extractor class names in one array
+   	$scope.getDefaultOps = function() {
+	   	return { Extractors: [
+	   				'Demo.Extractor.Extractor.Length',
+	   				'Demo.Extractor.Extractor.Age',
+	   				'Demo.Extractor.Extractor.Weight',
+	   				'Demo.Extractor.Extractor.BloodPressure',
+	   				'Demo.Extractor.Extractor.SmokingStatus' /*,
+	   				'Demo.Extractor.LengthConverter'*/
+	   				], 
+	   			 Resolvers: [
+	   			 	'Demo.Extractor.Resolver.Length',
+	   			 	'Demo.Extractor.Resolver.Score'
+	   			 ]};
+	   	/*
+	   	var arr = new Array($scope.extractors.length);
+	   	for (var i=0; i<$scope.extractors.length; i++) {
+		   	arr[i] = $scope.extractors[i].Classname;
+	   	}
+	   	return arr;
+	   	*/
+   	}
+   	
+   	$scope.submitText = function() {
+	   	//console.log($scope.inputText + $scope.ikDomain);
+	   	var request = $scope.getDefaultOps();
+	   	request.Text = $scope.inputText;
+	   	request.SourceId = ($scope.currentSource && ($scope.currentSource.SourceId>0)) ? $scope.currentSource.SourceId : "";
+	   	var x = rsExtract.index({domain: $scope.ikDomain}, request, function() {
+		   	$scope.extractedItems = x.Items;
+		   	$scope.currentSourceHTML = x.HighlightedText;
+		   	$scope.concepts = x.Concepts;
+		   	//console.log('Extracted '+x.Items.length+' items');
+		   	//console.log(x.HighlightedText);
+		   	delete x;
+	   	});
+	   	$scope.showInput = false;
+   	}
+   	
+   	
+   	$scope.selectSource = function() {
+	   	if ($scope.currentSource.SourceId == -1) {
+		   	$scope.currentSourceHTML = "";
+		   	$scope.showInput = true;
+	   	} else {
+		   	$scope.submitText();
+			$scope.showInput = false;
+	   	}
+	   	$scope.currentItem = "";
+   	}
+   	
+   	$scope.highlight = function(item, onOff, id) {
+	   	if (id == '') {
+		   	var els = document.getElementsByClassName('ci'+item);
+		   	for (var i = 0; i<els.length; i++) {
+			   	els[i].style.backgroundColor = (onOff ? 'GreenYellow' : '');
+		   	}
+	   	} else {
+		   	var els = document.getElementsByClassName('ci'+item+'n'+id);
+		   	for (var i = 0; i<els.length; i++) {
+			   	//els[i].style.border = (onOff ? 'red solid 1px' : 'none');
+			   	els[i].style.backgroundColor = (onOff ? 'FireBrick' : 'GreenYellow');
+			   	els[i].style.color = (onOff ? 'white' : '');
+		   	}
+	   	}
+   	}
+   	
+   	$scope.currentItem = "";
+   	$scope.selectItem = function(item) {
+	   	if ($scope.currentItem) { $scope.highlight($scope.currentItem.ItemName, false, ''); }
+	   	$scope.currentItem = item;
+	   	$scope.highlight(item.ItemName, true, '');
+   	}
+ }]);
+ 
+ function hostURL() {
+	 return location.href.split('/').slice(0,5).join('/')+'/extractor/';
+ }
+
+ extractorApp.factory('rsExtract', [ '$resource', 
+   function ($resource) {
+     return $resource( hostURL() + "extract/:domain", {}, {
+			index: { method: "POST", isArray: false, interceptor : { responseError : rsErrorHandler } }
+		});
+ }]);
+ 
+ function rsErrorHandler(response) {
+	 console.log("ERROR: "+response.status+" ("+response.statusText+")");
+ };]]></CSP>
+</Export>

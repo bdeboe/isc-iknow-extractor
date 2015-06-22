@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.Extractor.Weight">
+<Super>Regexp</Super>
+<TimeCreated>63713,42399.03238</TimeCreated>
+
+<Parameter name="ITEMNAME">
+<Default>WEIGHT-KG</Default>
+</Parameter>
+
+<Parameter name="ITEMLABEL">
+<Default>Weight (kg)</Default>
+</Parameter>
+
+<Parameter name="ITEMDESCRIPTION">
+<Default>Weight in kilograms</Default>
+</Parameter>
+
+<Method name="GetRegularExpressions">
+<Description>
+Return the regexps this extractor should take care of:
+		pRegexps(ID) = $lb(ITEM, regexp, replace, element, eval)</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pRegexps</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	kill pRegexps
+	set pRegexps($i(pRegexps)) = $lb("(.*[^0-9\.])?([0-9\.]+)( )?(kg|kilos|kilograms?).*", "$2 //", 1, 1)
+	set pRegexps($i(pRegexps)) = $lb("(.*[^0-9\.])?([0-9\.]+)( )?(pounds?).*", """$2""/2 //", 1, 1)
+	quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>

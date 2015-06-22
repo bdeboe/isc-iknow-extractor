@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<CSP name="Extractor.csp" application="/csp/extractor/" default="1"><![CDATA[
+<!DOCTYPE html>
+<html ng-app="extractorApp">
+<head>
+	<title>Extractor demo page</title>
+    <link rel="stylesheet" type="text/css" href="nglib/bootstrap/css/bootstrap.min.css" />
+    <script type="text/javascript" src="nglib/jquery-1.9.0.min.js"></script>
+    <script type="text/javascript" src="nglib/angular.min.js"></script>  <!--general angular framework-->
+    <script type="text/javascript" src="nglib/bootstrap/js/bootstrap.min.js"></script>  <!--twitter bootstrap framework -->
+    <script type="text/javascript" src="nglib/angular-resource.min.js"></script>  <!--angular tools for resources (like $resource for rest)  -->
+    <script type="text/javascript" src="nglib/angular-sanitize.min.js"></script>  <!--angular tools for sanitize (html safe output like $sce -->
+    <script type="text/javascript" src="Extractor.js"></script>
+    
+    <style type="text/css">
+    
+    body {
+	    padding: 15px;
+    }
+    
+    .unreliable {
+	    color: #777777;
+    }
+    .negated {
+	    color: FireBrick;
+    }
+    .concept {
+	    background-color: LemonChiffon;
+    }
+    .concept:hover {
+	    background-color: Yellow;
+    }
+    
+   </style>
+</head>
+
+<body >
+
+<div class="container" ng-controller="ExtractorController as exc" >
+
+<div class="row"><!-- top row -->
+
+<!-- begin text frame -->
+<div class="col-md-7">
+<h2>Input Text  
+	<small><small>or copy from <select ng-model="currentSource" ng-options="src.Label for src in sources" 
+		ng-change="selectSource()"></select></small></small>
+</h2>
+<div class="row" ng-show="showInput">
+<textarea class="form-control" rows="6" placeholder="Text input" ng-model="inputText"></textarea>
+<button type="submit" ng-click="submitText()" class="btn btn-primary" style="margin-top:15px;" >Submit</button>
+</div>
+<div ng-bind-html="currentSourceHTML" style="overflow-y: auto; height: 500px;">
+</div>
+</div>
+<!-- end text frame -->
+
+
+<!-- begin results frame -->
+<div class="col-md-4 col-md-offset-1">
+<ul class="nav nav-tabs">
+ <li ng-class="{ 'active': currentTab==0 }"><a href="#" ng-click="currentTab=0;">Extracted items</a></li>
+ <li ng-class="{ 'active': currentTab==1 }"><a href="#" ng-click="currentTab=1;">Concepts</a></li>
+</ul>
+
+<div ng-show="currentTab == 0" style="margin-top: 20px;" >
+<h3>Extraction results</h3>
+<dl class="dl-horizontal" ng-repeat="item in extractedItems" ng-click="selectItem(item)" 
+	style="cursor: pointer;" title="Click to show details">
+  <dt>{{item.Label}}</dt>
+  <dd>{{item.ResolvedValue ? item.ResolvedValue.Value : 'unknown' }}</dd>
+  <!--dd ng-repeat="value in item.Values" ng-mouseenter="highlight(item.ItemName, true)" ng-mouseleave="highlight(item.ItemName, false)">
+  	<small><small ng-class="{ 'unreliable': (value.Score<=0) }">{{value.SourceClass}}: {{value.Value}}</small></small>
+  </dd-->
+</dl>
+
+<div class="row">&nbsp;</div>
+
+<div ng-show="currentItem != ''">
+<div class="row">
+<h4>Details for {{currentItem.Label}}</h4>
+<table class="table table-hover">
+<tr><th>Value</th><th>Source</th><th>Score</th></tr>
+<tr ng-repeat="value in currentItem.Values" 
+	ng-class="{ 'unreliable': (value.Score<=0), 'negated': (value.Negated>0) }"
+	ng-mouseenter="highlight(currentItem.ItemName, true, value.HighlightID)" 
+	ng-mouseleave="highlight(currentItem.ItemName, false, value.HighlightID)" >
+<td>{{value.Value}}</td>
+<td><small>{{value.SourceClass}}</small></td>
+<td>{{value.Score}}</td>
+</tr>
+</table>
+</div>
+
+<div class="row" ng-show="currentItem.Entities.length">
+<h4 style="margin-top: 30px;">Relevant entities</h4>
+<ul><li ng-repeat="ent in currentItem.Entities">{{ent}}</li></ul>
+</div>
+
+<div class="row" ng-show="currentItem.Proximity.length">
+<h4 style="margin-top: 30px;">Proximity information</h4>
+<table class="table table-hover">
+<tr><th>Entity</th><th>Score</th></tr>
+<tr ng-repeat="prox in currentItem.Proximity">
+<td>{{prox.Entity}}</td>
+<td>{{prox.Score}}</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+
+
+<div ng-show="currentTab == 1">
+<h3>Concepts</h3>
+
+<div class="row" style="overflow-y: auto; height: 500px;" >
+<table class="table table-hover">
+<tr><th><input type="text" ng-model="criteria"></th><th>Score</th></tr>
+<tr ng-repeat="con in concepts | filter: criteria | limitTo: 100">
+<td>{{con.Concept}}</td>
+<td>{{con.Dominance}}</td>
+</tr>
+</table>
+</div>
+</div>
+
+</div>
+<!-- end results frame -->
+
+
+</div><!-- top row -->
+
+<!--ul>
+<li ng-repeat="ex in extractors">{{ex.Classname}}</li>
+</ul-->
+</div>
+</body>
+</html>
+]]></CSP>
+</Export>

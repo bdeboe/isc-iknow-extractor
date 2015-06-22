@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.Resolver.Abstract">
+<Abstract>1</Abstract>
+<Super>%RegisteredObject</Super>
+<TimeCreated>63718,60511.029576</TimeCreated>
+
+<Method name="Resolve">
+<Description>
+Accepts (merged) results as retrieved by AbstractExtractor:Extract() and identifies the
+value with the highest total score, populating the base pResults(LABEL) nodes with the 
+selected value and aggregate score.</Description>
+<Abstract>1</Abstract>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[&pResults]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set tSC = $$$OK
+	try {
+
+	} catch (ex) {
+		set tSC = ex.AsStatus()
+	}
+	quit tSC
+]]></Implementation>
+</Method>
+</Class>
+</Export>
