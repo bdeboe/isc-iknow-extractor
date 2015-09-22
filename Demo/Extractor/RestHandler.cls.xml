@@ -105,7 +105,9 @@ Accepts the following JSON (as HTTP POST content):
 			set tClassname = tRequest.Extractors.GetAt(i)
 			
 			// assume there won't be any name conflicts
-			set tItems($parameter(tClassname,"ITEMNAME")) = $lb($parameter(tClassname,"ITEMLABEL"), $parameter(tClassname,"ITEMDESCRIPTION"))
+			set tItemName = $parameter(tClassname,"ITEMNAME")
+			set tItems(tItemName) = $lb($parameter(tClassname,"ITEMLABEL"), $parameter(tClassname,"ITEMDESCRIPTION"))
+			set tResolvers(tItemName) = $parameter(tClassname,"RESOLVER")
 			
 			set tExtractor = $classmethod(tClassname, "%New", pDomainId)
 			if '$isobject(tExtractor) {
@@ -120,6 +122,12 @@ Accepts the following JSON (as HTTP POST content):
 		quit:$$$ISERR(tSC)
 		
 		// consolidate using list of resolvers
+		set tItemName = ""
+		for {
+			set tItemName = $order(tResolvers(tItemName), 1, tClassname)
+			quit:tItemName=""
+			set:'$f(tClassname,".") tClassname = "Demo.Extractor.Resolver."_tClassname
+		}
 		for i = 1:1:tRequest.Resolvers.Count() {
 			set tClassname = tRequest.Resolvers.GetAt(i)
 			set tExtractor = $classmethod(tClassname, "Resolve", .tResults)
@@ -161,7 +169,7 @@ Accepts the following JSON (as HTTP POST content):
 				if (tHLSpec'="") {
 					set tType = $piece(tHLSpec,":",1)
 					if tType="MATCH" {
-						set tHighlights("MATCH", $piece(tHLSpec,":",2)) = "<b class=""ci"_tItem_" ci"_tItem_"n$$$ID"">"
+						set tHighlights("MATCH", $piece(tHLSpec,":",2)) = "<span onclick=""selectItem('"_tItem_"')"" class=""cItem ci"_tItem_" ci"_tItem_"n$$$ID"">"
 						set tValueObj.HighlightID = $piece(tHLSpec,":",3)
 					}
 				}
@@ -285,7 +293,7 @@ Accepts the following JSON (as HTTP POST content):
 ValueToJSON(tValue)
 	set tValueObj = ##class(%ZEN.proxyObject).%New()
 	set tValueObj.Value = $lg(tValue,1)
-	set tValueObj.Score = $lg(tValue,2)
+	set tValueObj.Score = $fnumber($lg(tValue,2),"",2)
 	set tValueObj.SourceClass = $lg(tValue,3)
 	set tValueObj.Negated = $lg(tValue,6)
 	quit tValueObj

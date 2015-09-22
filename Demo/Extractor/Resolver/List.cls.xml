@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.Resolver.List">
+<Super>Abstract</Super>
+<TimeCreated>63732,50312.351887</TimeCreated>
+
+<Method name="Resolve">
+<Description>
+Accepts (merged) results as retrieved by AbstractExtractor:Extract() and identifies the
+value with the highest total score, populating the base pResults(LABEL) nodes with the 
+selected value and aggregate score.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[&pResults]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set tSC = $$$OK
+	try {
+		
+		set tItem = ""
+		for {
+			set tItem = $order(pResults(tItem))
+			quit:tItem=""
+			
+			kill tItemData
+			set i = ""
+			for {
+				set i = $order(pResults(tItem, i),1,tData)
+				quit:i=""
+				
+				set tIdx = $lf($g(tItemData(1)),$li(tData,1))
+				if 'tIdx {
+					for i = 1:1:6 {
+						set tItemData(i) = $g(tItemData(i))_$li(tData,i,i)
+					}
+				} else {
+					// ...
+				}
+			}
+		}
+
+	} catch (ex) {
+		set tSC = ex.AsStatus()
+	}
+	quit tSC
+]]></Implementation>
+</Method>
+</Class>
+</Export>

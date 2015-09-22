@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.Extractor.RoleDecision">
+<Super>Dictionary</Super>
+<TimeCreated>63729,61597.34816</TimeCreated>
+
+<Parameter name="ITEMDESCRIPTION">
+<Default>Role in decision-making processes</Default>
+</Parameter>
+
+<Parameter name="ITEMLABEL">
+<Default>Role</Default>
+</Parameter>
+
+<Parameter name="ITEMNAME">
+<Default>ROLE-DECISION</Default>
+</Parameter>
+
+<Method name="GetTerms">
+<Description>
+Return the (literal) terms this extractor should take care of:
+		pTerms(ID) = $lb(name, $lb(terms, ...))</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pTerms</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set pTerms($i(pTerms)) = $lb("decision maker", $lb("decision-maker", "decision maker"))
+	set pTerms($i(pTerms)) = $lb("influencer", $lb("decision influencer"))
+	quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>

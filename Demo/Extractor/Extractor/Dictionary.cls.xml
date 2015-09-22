@@ -114,7 +114,7 @@ Extracts item values from <var>pSourceId</var> and appends them to <var>pResults
 				//set tEntities = tEntities_$lb(##class(%iKnow.Queries.EntityAPI).GetValueInternal(..DomainId, $lg(tElementData,3), $s(pSourceId<0:pSourceId, 1:0)))
 				set:..#TRACKENTITIES tEntities = tEntities_$lb($lg(tElementData,3))
 			}
-			do ..AddResult(.pResults, tName, tScore, "MATCH:"_..DictionaryId_":"_tMatchId, tEntities, $lg(tData,14))
+			do ..AddResult(.pResults, tName, tScore, "MATCH:"_..DictionaryId_":"_tMatchId, tEntities, $lg(tData,15))
 		}
 		quit:$$$ISERR(tSC)
 		

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.Extractor.RoleJob">
+<Super>Dictionary</Super>
+<TimeCreated>63729,62570.745614</TimeCreated>
+
+<Parameter name="ITEMDESCRIPTION">
+<Default>Job level</Default>
+</Parameter>
+
+<Parameter name="ITEMLABEL">
+<Default>Job level</Default>
+</Parameter>
+
+<Parameter name="ITEMNAME">
+<Default>ROLE-JOB</Default>
+</Parameter>
+
+<Method name="GetTerms">
+<Description>
+Return the (literal) terms this extractor should take care of:
+		pTerms(ID) = $lb(name, $lb(terms, ...))</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pTerms</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set pTerms($i(pTerms)) = $lb("C-level", $lb("CEO", "COO", "CFO", "CTO", "CMO", "CIO"))
+	set pTerms($i(pTerms)) = $lb("director", $lb("director"))
+	set pTerms($i(pTerms)) = $lb("manager", $lb("manager"))
+	set pTerms($i(pTerms)) = $lb("architect", $lb("architect"))
+	quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.Extractor.Software">
+<Super>Dictionary</Super>
+<TimeCreated>63732,40334.800189</TimeCreated>
+
+<Method name="GetTerms">
+<Description>
+Return the (literal) terms this extractor should take care of:
+		pTerms(ID) = $lb(name, $lb(terms, ...))</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pTerms</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set pTerms($i(pTerms)) = $lb("ECM", $lb("enterprise content management", "ecm", "content management", "content management software", "content management solution", "content management system"))
+	set pTerms($i(pTerms)) = $lb("Other", $lb("management software", "management system", "software"))
+	quit $$$OK
+]]></Implementation>
+</Method>
+
+<Parameter name="ITEMDESCRIPTION">
+<Default>Software types</Default>
+</Parameter>
+
+<Parameter name="ITEMLABEL">
+<Default>Software</Default>
+</Parameter>
+
+<Parameter name="ITEMNAME">
+<Default>SOFTWARE</Default>
+</Parameter>
+</Class>
+</Export>

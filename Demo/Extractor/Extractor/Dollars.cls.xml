@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.Extractor.Dollars">
+<Super>Regexp</Super>
+<TimeCreated>63729,63095.214617</TimeCreated>
+
+<Parameter name="ITEMDESCRIPTION">
+<Default>Estimated budget</Default>
+</Parameter>
+
+<Parameter name="ITEMLABEL">
+<Default>Budget</Default>
+</Parameter>
+
+<Parameter name="ITEMNAME">
+<Default>BUDGET</Default>
+</Parameter>
+
+<Parameter name="TRACKENTITIES">
+<Default>1</Default>
+</Parameter>
+
+<Method name="GetRegularExpressions">
+<Description>
+Return the regexps this extractor should take care of:
+		pRegexps(ID) = $lb(regexp, replace, element, eval)</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pRegexps</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set pRegexps($i(pRegexps)) = $lb("(.*[^0-9\.])?([0-9\.]+) ?(m|mil|million) ?(USD|EUR|euros?|dollars?|US dollars?)([^0-9a-z].*)?", "(""0$2""*1000000)_$s($find($zcvt(""$4"",""l""),""eur""):"" EUR"", 1:"" USD"") //", 1, 1)
+	set pRegexps($i(pRegexps)) = $lb("(.*[^0-9\.])?([0-9\.]+) ?(k|thousand) ?(USD|EUR|euros?|dollars?|US dollars?)([^0-9a-z].*)?", "(""0$2""*1000)_$s($find($zcvt(""$4"",""l""),""eur""):"" EUR"", 1:"" USD"") //", 1, 1)
+	set pRegexps($i(pRegexps)) = $lb("(.*[^0-9\.])?([0-9]+) ?(USD|EUR|euros?|dollars?|US dollars?)([^0-9a-z].*)?", "(+""0$2"")_$s($find($zcvt(""$4"",""l""),""eur""):"" EUR"", 1:"" USD"") //", 1, 1)
+	//set pRegexps($i(pRegexps)) = $lb(".*no budget.*", "0 USD", 1, 0)
+	quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>

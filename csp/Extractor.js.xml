@@ -4,13 +4,22 @@
 
 var extractorApp = angular.module('extractorApp', ['ngResource', 'ngSanitize']);
 
- extractorApp.controller('ExtractorController', [ '$scope', '$resource', 'rsExtract', function($scope, $resource, rsExtract) {
+ extractorApp.controller('ExtractorController', [ '$scope', '$resource', '$sce', 'rsExtract', function($scope, $resource, $sce, rsExtract) {
 	
 	$scope.currentTab = 0;
+	$scope.currentTabSub = 0;
 	 
 	// initialize ikDomain
-	if (location.search === '') { alert('No domain specified in URL!'); }
-	$scope.ikDomain = location.search.substr(1).split('#')[0];
+	function initDomain() {
+		var domain = location.search.substr(1).split('#')[0];
+		if (!isNaN(parseInt(domain))) return parseInt(domain);
+		var regexp = /^([0-9]+)/;
+		var parsed = regexp.exec(domain);
+		if (parsed && (parsed.length>0) && !isNaN(parseInt(parsed[0]))) return parsed[0];
+		alert('No domain specified in URL!'); 
+		return 0;
+	}
+	$scope.ikDomain = initDomain();
 	 
 	// initialize list of available extractors and sources
    	var x = $resource( hostURL() + "extractors", {}, 
@@ -34,11 +43,15 @@ var extractorApp = angular.module('extractorApp', ['ngResource', 'ngSanitize']);
    	// utility function to retrieve all extractor class names in one array
    	$scope.getDefaultOps = function() {
 	   	return { Extractors: [
-	   				'Demo.Extractor.Extractor.Length',
 	   				'Demo.Extractor.Extractor.Age',
+	   				'Demo.Extractor.Extractor.RoleDecision',
+	   				'Demo.Extractor.Extractor.RoleJob',
+	   				'Demo.Extractor.Extractor.Dollars',
+	   				'Demo.Extractor.Extractor.Software'
+	   				/*'Demo.Extractor.Extractor.Length',
 	   				'Demo.Extractor.Extractor.Weight',
 	   				'Demo.Extractor.Extractor.BloodPressure',
-	   				'Demo.Extractor.Extractor.SmokingStatus' /*,
+	   				'Demo.Extractor.Extractor.SmokingStatus'
 	   				'Demo.Extractor.LengthConverter'*/
 	   				], 
 	   			 Resolvers: [
@@ -55,16 +68,13 @@ var extractorApp = angular.module('extractorApp', ['ngResource', 'ngSanitize']);
    	}
    	
    	$scope.submitText = function() {
-	   	//console.log($scope.inputText + $scope.ikDomain);
 	   	var request = $scope.getDefaultOps();
 	   	request.Text = $scope.inputText;
 	   	request.SourceId = ($scope.currentSource && ($scope.currentSource.SourceId>0)) ? $scope.currentSource.SourceId : "";
 	   	var x = rsExtract.index({domain: $scope.ikDomain}, request, function() {
 		   	$scope.extractedItems = x.Items;
-		   	$scope.currentSourceHTML = x.HighlightedText;
+		   	$scope.currentSourceHTML = $sce.trustAsHtml(x.HighlightedText);
 		   	$scope.concepts = x.Concepts;
-		   	//console.log('Extracted '+x.Items.length+' items');
-		   	//console.log(x.HighlightedText);
 		   	delete x;
 	   	});
 	   	$scope.showInput = false;
@@ -80,6 +90,8 @@ var extractorApp = angular.module('extractorApp', ['ngResource', 'ngSanitize']);
 			$scope.showInput = false;
 	   	}
 	   	$scope.currentItem = "";
+		$scope.currentTab = 0;
+		$scope.currentTabSub = 0;
    	}
    	
    	$scope.highlight = function(item, onOff, id) {
@@ -107,7 +119,8 @@ var extractorApp = angular.module('extractorApp', ['ngResource', 'ngSanitize']);
  }]);
  
  function hostURL() {
-	 return location.href.split('/').slice(0,5).join('/')+'/extractor/';
+	 // retrieves the presumed base URL for the REST handler's web app
+	 return location.href.split('/').slice(0,-1).join('/')+'/exREST/';
  }
 
  extractorApp.factory('rsExtract', [ '$resource', 

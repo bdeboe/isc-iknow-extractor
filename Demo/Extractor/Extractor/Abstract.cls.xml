@@ -15,6 +15,10 @@
 <Parameter name="ITEMDESCRIPTION">
 </Parameter>
 
+<Parameter name="RESOLVER">
+<Default>Score</Default>
+</Parameter>
+
 <Property name="DomainId">
 <Type>%Integer</Type>
 </Property>

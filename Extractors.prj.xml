@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Export generator="Cache" version="25">
-<Project name="Extractors" LastModified="2015-06-22 17:21:30.663447">
+<Project name="Extractors" LastModified="2015-06-29 17:56:34.269266">
   <Items>
     <ProjectItem name="Demo.Extractor.Extractor.Abstract" type="CLS"></ProjectItem>
     <ProjectItem name="Demo.Extractor.Extractor.Age" type="CLS"></ProjectItem>
     <ProjectItem name="Demo.Extractor.Extractor.BloodPressure" type="CLS"></ProjectItem>
     <ProjectItem name="Demo.Extractor.Extractor.Dictionary" type="CLS"></ProjectItem>
+    <ProjectItem name="Demo.Extractor.Extractor.Dollars" type="CLS"></ProjectItem>
     <ProjectItem name="Demo.Extractor.Extractor.Length" type="CLS"></ProjectItem>
     <ProjectItem name="Demo.Extractor.Extractor.Regexp" type="CLS"></ProjectItem>
+    <ProjectItem name="Demo.Extractor.Extractor.RoleDecision" type="CLS"></ProjectItem>
+    <ProjectItem name="Demo.Extractor.Extractor.RoleJob" type="CLS"></ProjectItem>
     <ProjectItem name="Demo.Extractor.Extractor.SmokingStatus" type="CLS"></ProjectItem>
     <ProjectItem name="Demo.Extractor.Extractor.Weight" type="CLS"></ProjectItem>
     <ProjectItem name="Demo.Extractor.Resolver.Abstract" type="CLS"></ProjectItem>
@@ -15,6 +18,7 @@
     <ProjectItem name="Demo.Extractor.Resolver.Length" type="CLS"></ProjectItem>
     <ProjectItem name="Demo.Extractor.Resolver.Score" type="CLS"></ProjectItem>
     <ProjectItem name="Demo.Extractor.RestHandler" type="CLS"></ProjectItem>
+    <ProjectItem name="Demo.Extractor.SampleDomain" type="CLS"></ProjectItem>
     <ProjectItem name="Demo.Extractor.Utils" type="CLS"></ProjectItem>
     <ProjectItem name="csp/extractor/Extractor.csp" type="CSP"></ProjectItem>
     <ProjectItem name="csp/extractor/Extractor.js" type="CSP"></ProjectItem>
@@ -42,6 +46,8 @@
     <ProjectItem name="csp/extractor/nglib/bootstrap/js/bootstrap.min.js" type="CSP"></ProjectItem>
     <ProjectItem name="csp/extractor/nglib/jquery-1.9.0.min.js" type="CSP"></ProjectItem>
     <ProjectItem name="csp/extractor/nglib/jquery.min.map" type="CSP"></ProjectItem>
+    <ProjectItem name="Demo.Extractor.Extractor.Software" type="CLS"></ProjectItem>
+    <ProjectItem name="Demo.Extractor.Resolver.List" type="CLS"></ProjectItem>
   </Items>
 </Project>
 </Export>

@@ -13,6 +13,14 @@
     <script type="text/javascript" src="nglib/angular-sanitize.min.js"></script>  <!--angular tools for sanitize (html safe output like $sce -->
     <script type="text/javascript" src="Extractor.js"></script>
     
+    <script type="text/javascript">
+    
+    function selectItem(item) {
+	    angular.element('#i'+item).trigger('click');
+    }
+    </script>
+    
+    
     <style type="text/css">
     
     body {
@@ -30,6 +38,11 @@
     }
     .concept:hover {
 	    background-color: Yellow;
+    }
+    
+    .cItem {
+	    font-weight: bold;
+	    cursor: pointer;
     }
     
    </style>
@@ -59,7 +72,7 @@
 
 <!-- begin results frame -->
 <div class="col-md-4 col-md-offset-1">
-<ul class="nav nav-tabs">
+<ul class="nav nav-tabs nav-justified">
  <li ng-class="{ 'active': currentTab==0 }"><a href="#" ng-click="currentTab=0;">Extracted items</a></li>
  <li ng-class="{ 'active': currentTab==1 }"><a href="#" ng-click="currentTab=1;">Concepts</a></li>
 </ul>
@@ -67,7 +80,7 @@
 <div ng-show="currentTab == 0" style="margin-top: 20px;" >
 <h3>Extraction results</h3>
 <dl class="dl-horizontal" ng-repeat="item in extractedItems" ng-click="selectItem(item)" 
-	style="cursor: pointer;" title="Click to show details">
+	style="cursor: pointer;" title="Click to show details" id="i{{item.ItemName}}">
   <dt>{{item.Label}}</dt>
   <dd>{{item.ResolvedValue ? item.ResolvedValue.Value : 'unknown' }}</dd>
   <!--dd ng-repeat="value in item.Values" ng-mouseenter="highlight(item.ItemName, true)" ng-mouseleave="highlight(item.ItemName, false)">
@@ -78,8 +91,15 @@
 <div class="row">&nbsp;</div>
 
 <div ng-show="currentItem != ''">
-<div class="row">
-<h4>Details for {{currentItem.Label}}</h4>
+
+<ul class="nav nav-pills" style="margin-bottom: 10px;">
+ <li ng-class="{ 'active': currentTabSub==0 }" style="margin-right:20px;"><a href="#" ng-click="currentTabSub=0;">Details</a></li>
+ <li ng-class="{ 'active': currentTabSub==1 }" style="margin-right:20px;"><a href="#" ng-click="currentTabSub=1;">Entities</a></li>
+ <li ng-class="{ 'active': currentTabSub==2 }" style="margin-right:20px;"><a href="#" ng-click="currentTabSub=2;">Context</a></li>
+</ul>
+
+<div ng-show="currentTabSub == 0" style="margin-top: 20px;" >
+<h4>Details for '{{currentItem.Label}}'</h4>
 <table class="table table-hover">
 <tr><th>Value</th><th>Source</th><th>Score</th></tr>
 <tr ng-repeat="value in currentItem.Values" 
@@ -93,13 +113,15 @@
 </table>
 </div>
 
-<div class="row" ng-show="currentItem.Entities.length">
-<h4 style="margin-top: 30px;">Relevant entities</h4>
+<div ng-show="currentTabSub == 1" style="margin-top: 20px;" >
+<!--div class="row" ng-show="currentItem.Entities.length"-->
+<h4>Relevant entities</h4>
 <ul><li ng-repeat="ent in currentItem.Entities">{{ent}}</li></ul>
 </div>
 
-<div class="row" ng-show="currentItem.Proximity.length">
-<h4 style="margin-top: 30px;">Proximity information</h4>
+<div ng-show="currentTabSub == 2" style="margin-top: 20px;" >
+<!--div class="row" ng-show="currentItem.Proximity.length"-->
+<h4>Proximity information</h4>
 <table class="table table-hover">
 <tr><th>Entity</th><th>Score</th></tr>
 <tr ng-repeat="prox in currentItem.Proximity">

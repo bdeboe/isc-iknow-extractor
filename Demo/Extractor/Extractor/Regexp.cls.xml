@@ -51,7 +51,7 @@ dictionary items and formats.</Description>
 			
 			set tDictItemId = ##class(%iKnow.Matching.DictionaryAPI).CreateDictionaryItem(..DomainId, ..DictionaryId, $classname()_" #"_id, $classname()_":"_id,, .tSC)
 			quit:$$$ISERR(tSC)
-			set tDictTermId = ##class(%iKnow.Matching.DictionaryAPI).CreateRegularExpression(..DomainId, tDictItemId, $lg(tData,1), $lg(tData,2), .tSC)
+			set tDictTermId = ##class(%iKnow.Matching.DictionaryAPI).CreateRegularExpression(..DomainId, tDictItemId, $$$LOWER($lg(tData,1)), $lg(tData,2), .tSC)
 			quit:$$$ISERR(tSC)
 		}
 		
@@ -129,6 +129,33 @@ Extracts item values from <var>pSourceId</var> and appends them to <var>pResults
 	} catch (ex) {
 		set tSC = ex.AsStatus()
 	}
+	quit tSC
+]]></Implementation>
+</Method>
+
+<Method name="Test">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pDomainId:%Integer,pString:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	do ..GetRegularExpressions(.tRegexps)
+	for i = 1:1:$g(tRegexps) {
+		write !,"Testing #",i
+		set tSC = ##class(%iKnow.Matching.Formats.RegularExpression).%New(pDomainId).MatchSingle(pString,$li(tRegexps(i),1,2),.tScore,.tWordBits,,.tOutput)
+		quit:$$$ISERR(tSC)
+		if 'tScore {
+			write " NO MATCH: "_tScore
+			continue
+		}
+		
+		write " MATCH: "_tScore
+		if $lg(tRegexps(i),4) {
+			xecute ("(v) set v = "_tOutput, .tEvaluatedValue)
+			set tOutput = tEvaluatedValue
+		}
+		write !,"	output: '"_tOutput_"'"
+	}
+	
 	quit tSC
 ]]></Implementation>
 </Method>

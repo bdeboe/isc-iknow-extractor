@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.Extractor.SampleDomain">
+<Super>%iKnow.DomainDefinition</Super>
+<TimeCreated>63729,62110.119775</TimeCreated>
+
+<XData name="Domain">
+<XMLNamespace>http://www.intersystems.com/iknow</XMLNamespace>
+<Data><![CDATA[
+<domain name="Prospect call transcripts" allowCustomUpdates="true">
+<parameter name="$$$IKPSIMPLEEXTIDS" value="1" />
+</domain>
+]]></Data>
+</XData>
+
+<Method name="LoadSampleData">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pDropFirst:%Boolean=1</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set tSC = $$$OK
+	try {
+		set:pDropFirst tSC = ..%DropData()
+		quit:$$$ISERR(tSC)
+		
+		set tData("26-06-15-InterviewWithMrZuckerberg") = 
+				"I just spoke to Mr Zuckerberg who is the CEO and decision maker for the entire company. He told me they were currently hardly using any Content Management solutions and mostly rely on shared drives and company policies to know where to store and find documents. While this takes a while for new hires to get used to, as a solution it's quite cheap and they can spend their dollars elsewhere. However, Mr Zuckerberg agrees there is an opportunity for improving security and privacy practices and dedicated software may be part of that. Especially the excel sheet containing wage information and other confidential documents would benefit from a more secure storage space than the T-drive. He also mentioned some in-house applications developed on top of notepad for addressing specific big data requirements as well as artificial intelligence scenarios. " _
+				"He has heard about TBD and invited us to send more information. He especially liked the ease of use we advertise in our playground commercial. Total IT budget is 3 million USD."
+
+		set tData("25-06-15-InterviewWithMrRagon") = 
+				"Just had a pleasant conversation with Mr Ragon who is the CEO and decision maker for the entire company. They are currently using in-house solutions for content management, leveraging their innovative text analysis software called iKnow. Providing a data platform of their own, they are mostly interested in application partners that want to take advantage of their technology rather than acquiring a third-party solution such as TBD. He showed a personal interest in extensible content management platforms for which this iKnow technology could provide additional content-centric functionality. "_
+				"As for their handling of documents today, the existing solution covers most of their current requirements. Security considerations are met through a simple interface in their existing solution, which is based on MS Sharepoint. He mentioned a budget of about 500k US dollar for enterprise software only and well over 10m USD in total. "
+
+		set tData("26-06-15-CallWithMrEllison") =
+				"I just spoke to Mr Ellison - IT Manager - who confirmed himself as a decision influencer for the local IT shop. He was aware of some content management infrastructure based on Oracle as their corporate default platform, but remembered a number of Microsoft Sharepoint deployments in the facilities office on the 3rd floor. "_
+				"IT budget is estimated a meagre 5k euro, with no budget at all for document management software."
+		
+		
+		set tID = ""
+		for {
+			set tID = $order(tData(tID), 1, tText)
+			quit:tID=""
+			
+			// skip if we already have this record
+			continue:('pDropFirst)&&$system.iKnow.GetSourceId(..%GetDomainName(), tID)
+			
+			set tSC = $system.iKnow.IndexString(..%GetDomainName(), tID, tText)
+			quit:$$$ISERR(tSC)
+		}
+		quit:$$$ISERR(tSC)
+		
+	} catch (ex) {
+		set tSC = ex.AsStatus()
+	}
+	quit tSC
+]]></Implementation>
+</Method>
+</Class>
+</Export>
